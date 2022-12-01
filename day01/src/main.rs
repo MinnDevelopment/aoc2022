@@ -1,7 +1,4 @@
-use std::{
-    cmp::Reverse,
-    fs,
-};
+use std::fs;
 
 use anyhow::Result;
 
@@ -20,11 +17,11 @@ fn main() -> Result<()> {
 }
 
 fn part1(input: &str) {
-    let mut total: u64 = 0;
+    let mut total = 0;
     let mut max = 0;
 
     for line in input.lines() {
-        match line.parse::<u64>() {
+        match line.parse::<u32>() {
             Ok(n) => {
                 total += n;
                 if total > max {
@@ -41,28 +38,40 @@ fn part1(input: &str) {
 }
 
 fn part2(input: &str) {
-    let mut elves = Vec::new();
+    let mut top3 = [0; 3];
 
-    elves.push(Reverse(0));
+    let mut total = 0;
 
     for line in input.lines() {
-        match line.parse::<u64>() {
+        match line.parse::<u32>() {
             Ok(n) => {
-                elves.last_mut().unwrap().0 += n;
+                total += n;
             }
             _ => {
-                elves.push(Reverse(0));
+                replace_min(&mut top3, total);
+                total = 0;
             }
         }
     }
 
-    elves.sort();
+    replace_min(&mut top3, total);
+
+    top3.sort();
 
     let mut total = 0;
-    for (i, &v) in elves[0..3].iter().enumerate() {
-        println!("{}. {}", i+1, v.0);
-        total += v.0;
+    for (i, v) in top3.into_iter().enumerate() {
+        println!("{}. {}", i + 1, v);
+        total += v;
     }
 
     println!("Total: {}", total);
+}
+
+#[inline(always)]
+fn replace_min(arr: &mut [u32; 3], v: u32) {
+    let (min, min_id) = arr.iter().enumerate().map(|(i, &n)| (n, i)).min().unwrap();
+
+    if v > min {
+        arr[min_id] = v;
+    }
 }
