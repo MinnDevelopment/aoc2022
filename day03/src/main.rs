@@ -13,7 +13,7 @@ fn main() {
 }
 
 fn part1(input: &str) {
-    let mut freq = [0; 52];
+    let mut sum = 0;
     for line in input.lines() {
         // Parse into left and right bitset of priorities
         let (left, right) = parse_compartments(line);
@@ -21,17 +21,10 @@ fn part1(input: &str) {
         let common = left & right;
         // Decode it back into the priority value
         let priority = 64 - common.leading_zeros();
-        freq[priority as usize - 1] += 1;
+        sum += priority;
     }
 
-    println!(
-        "Sum: {}",
-        freq.into_iter()
-            .enumerate()
-            .filter(|(_, f)| f > &0)
-            .map(|(i, f)| f * (i as u32 + 1))
-            .sum::<u32>()
-    );
+    println!("Sum: {}", sum);
 }
 
 fn part2(input: &str) {
