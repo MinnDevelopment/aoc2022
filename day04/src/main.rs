@@ -14,11 +14,10 @@ fn main() {
 fn part1() {
     let count: usize = INPUT
         .lines()
-        .filter_map(|line| parse_pair(line))
+        .filter_map(parse_pair)
         .filter(|pair| {
-            (pair.first.contains(pair.second.start()) && pair.first.contains(pair.second.end()))
-                || (pair.second.contains(pair.first.start())
-                    && pair.second.contains(pair.first.end()))
+            pair.first.contains(pair.second.start()) && pair.first.contains(pair.second.end())
+         || pair.second.contains(pair.first.start()) && pair.second.contains(pair.first.end())
         })
         .count();
 
@@ -28,7 +27,7 @@ fn part1() {
 fn part2() {
     let count: usize = INPUT
         .lines()
-        .filter_map(|line| parse_pair(line))
+        .filter_map(parse_pair)
         .filter(|pair| {
             pair.first.contains(pair.second.start()) || pair.second.contains(pair.first.start())
         })
@@ -39,9 +38,9 @@ fn part2() {
 
 #[inline]
 fn parse_pair(line: &str) -> Option<Pair> {
-    let (left, right) = line.split_once(",")?;
-    let (left_s, left_e) = left.split_once("-")?;
-    let (right_s, right_e) = right.split_once("-")?;
+    let (left, right) = line.split_once(',')?;
+    let (left_s, left_e) = left.split_once('-')?;
+    let (right_s, right_e) = right.split_once('-')?;
 
     Some(Pair {
         first: left_s.parse().ok()?..=left_e.parse().ok()?,
