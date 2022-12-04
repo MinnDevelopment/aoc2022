@@ -1,5 +1,3 @@
-use std::ops::RangeInclusive;
-
 const INPUT: &str = include_str!("../input.txt");
 
 fn main() {
@@ -15,10 +13,7 @@ fn part1() {
     let count: usize = INPUT
         .lines()
         .filter_map(parse_pair)
-        .filter(|pair| {
-            pair.first.contains(pair.second.start()) && pair.first.contains(pair.second.end())
-         || pair.second.contains(pair.first.start()) && pair.second.contains(pair.first.end())
-        })
+        .filter(|(a, b, c, d)| (a - c) * (b - d) <= 0)
         .count();
 
     println!("Count: {}", count);
@@ -28,9 +23,7 @@ fn part2() {
     let count: usize = INPUT
         .lines()
         .filter_map(parse_pair)
-        .filter(|pair| {
-            pair.first.contains(pair.second.start()) || pair.second.contains(pair.first.start())
-        })
+        .filter(|(a, b, c, d)| a.max(c) <= b.min(d))
         .count();
 
     println!("Count: {}", count);
@@ -42,13 +35,12 @@ fn parse_pair(line: &str) -> Option<Pair> {
     let (left_s, left_e) = left.split_once('-')?;
     let (right_s, right_e) = right.split_once('-')?;
 
-    Some(Pair {
-        first: left_s.parse().ok()?..=left_e.parse().ok()?,
-        second: right_s.parse().ok()?..=right_e.parse().ok()?,
-    })
+    Some((
+        left_s.parse().ok()?,
+        left_e.parse().ok()?,
+        right_s.parse().ok()?,
+        right_e.parse().ok()?,
+    ))
 }
 
-struct Pair {
-    first: RangeInclusive<i32>,
-    second: RangeInclusive<i32>,
-}
+type Pair = (i32, i32, i32, i32);
