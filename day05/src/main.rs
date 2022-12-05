@@ -86,13 +86,12 @@ impl CargoStacks {
                 break;
             }
 
-            let b = line.as_bytes();
-            for (s, i) in (1..b.len()).step_by(4).enumerate() {
-                match b[i] {
-                    b' ' => continue,
-                    item => stacks[s].push(item),
-                }
-            }
+            line[1..]
+                .bytes()
+                .step_by(4)
+                .enumerate()
+                .filter(|(_, b)| b != &b' ')
+                .for_each(|(s, item)| stacks[s].push(item));
         }
 
         for stack in &mut stacks {
