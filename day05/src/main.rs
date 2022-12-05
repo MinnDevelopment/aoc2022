@@ -82,15 +82,12 @@ impl CargoStacks {
     fn parse(input: &str) -> Self {
         let mut stacks = vec![vec![]; 9];
         for line in input.lines() {
-            let b = line.as_bytes();
             if line.starts_with(" 1") {
                 break;
             }
-            for (s, i) in (1_usize..).step_by(4).enumerate() {
-                if i >= b.len() {
-                    break;
-                }
 
+            let b = line.as_bytes();
+            for (s, i) in (1..b.len()).step_by(4).enumerate() {
                 match b[i] {
                     b' ' => continue,
                     item => stacks[s].push(item),
