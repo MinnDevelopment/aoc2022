@@ -1,4 +1,4 @@
-use std::collections::{VecDeque, HashMap};
+use std::collections::VecDeque;
 
 const INPUT: &str = include_str!("../input.txt");
 
@@ -11,40 +11,32 @@ fn main() {
 }
 
 fn part1() {
-    let start = find_start_marker(4);
+    let start = find_start_marker::<4>();
     println!("Start: {} {:?}", start, &INPUT[start - 4..start]);
 }
 
 fn part2() {
-    let start = find_start_marker(14);
+    let start = find_start_marker::<14>();
     println!("Start: {} {:?}", start, &INPUT[start - 14..start]);
 }
 
-fn find_start_marker(len: usize) -> usize {
-    let mut window: VecDeque<_> = INPUT.bytes().take(len).collect();
-    let mut cardinality = HashMap::with_capacity(len);
+fn find_start_marker<const N: usize>() -> usize {
+    let mut window: VecDeque<_> = INPUT.bytes().take(N).collect();
+    let mut cardinality = [0; 26];
     for &b in window.iter() {
-        *cardinality.entry(b).or_insert(0) += 1;
+        cardinality[(b - b'a') as usize] += 1;
     }
 
-    if cardinality.len() == len {
-        return len;
-    }
+    for (i, b) in INPUT.bytes().enumerate().skip(N) {
+        if cardinality.iter().all(|&i| i <= 1) {
+            return i; // It asks for *character count* not index!
+        }
 
-    for (i, b) in INPUT.bytes().enumerate().skip(len) {
         let old = window.pop_front().unwrap();
-        if let Some(count) = cardinality.remove(&old) {
-            if count > 1 {
-                cardinality.insert(old, count - 1);
-            }
-        }
-        
-        window.push_back(b);
-        *cardinality.entry(b).or_insert(0) += 1;
+        cardinality[(old - b'a') as usize] -= 1;
 
-        if cardinality.len() == len {
-            return i + 1; // It asks for *character count* not index!
-        }
+        window.push_back(b);
+        cardinality[(b - b'a') as usize] += 1;
     }
 
     panic!("Failed to find start marker!");
