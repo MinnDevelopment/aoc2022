@@ -1,43 +1,46 @@
-use std::collections::VecDeque;
+use std::time::Instant;
 
-const INPUT: &str = include_str!("../input.txt");
+const INPUT: &[u8] = include_bytes!("../input.txt");
 
 fn main() {
+    let start_time = Instant::now();
+    let a = part1();
+
+    let b = part2();
+    let end_time = Instant::now();
+
     println!("Part 1:");
-    part1();
-
+    println!("Start: {} {:?}", a, String::from_utf8_lossy(&INPUT[a - 4..a]));
     println!("\nPart 2:");
-    part2();
+    println!("Start: {} {:?}", b, String::from_utf8_lossy(&INPUT[b - 14..b]));
+    println!("\nTime: {:?}", end_time - start_time);
 }
 
-fn part1() {
-    let start = find_start_marker::<4>();
-    println!("Start: {} {:?}", start, &INPUT[start - 4..start]);
+#[inline]
+fn part1() -> usize {
+    find_start_marker::<4>()
 }
 
-fn part2() {
-    let start = find_start_marker::<14>();
-    println!("Start: {} {:?}", start, &INPUT[start - 14..start]);
+#[inline]
+fn part2() -> usize {
+    find_start_marker::<14>()
 }
 
+#[inline]
 fn find_start_marker<const N: usize>() -> usize {
-    let mut window: VecDeque<_> = INPUT.bytes().take(N).collect();
     let mut cardinality = [0; 26];
-    for &b in window.iter() {
+    for &b in &INPUT[..N] {
         cardinality[(b - b'a') as usize] += 1;
     }
 
-    for (i, b) in INPUT.bytes().enumerate().skip(N) {
+    for i in N..INPUT.len() {
         if cardinality.iter().all(|&i| i <= 1) {
             return i; // It asks for *character count* not index!
         }
 
-        let old = window.pop_front().unwrap();
-        cardinality[(old - b'a') as usize] -= 1;
-
-        window.push_back(b);
-        cardinality[(b - b'a') as usize] += 1;
+        cardinality[(INPUT[i - N] - b'a') as usize] -= 1;
+        cardinality[(INPUT[i] - b'a') as usize] += 1;
     }
 
-    panic!("Failed to find start marker!");
+    unreachable!("Failed to find start marker!");
 }
