@@ -22,20 +22,20 @@ fn part1(shell: &Shell) -> usize {
     shell
         .directories
         .values()
-        .map(|dir| dir.size)
+        .copied()
         .filter(|&size| size <= 100000)
         .sum()
 }
 
 #[inline]
 fn part2(shell: &Shell) -> usize {
-    let unused = 70000000 - shell.directories[""].size;
+    let unused = 70000000 - shell.directories[""];
     let required = 30000000 - unused;
 
     shell
         .directories
         .values()
-        .map(|dir| dir.size)
+        .copied()
         .filter(|&size| size >= required)
         .min()
         .unwrap()
@@ -78,12 +78,6 @@ impl From<&str> for Path {
 }
 
 impl Path {
-    fn child(&self, child: &str) -> Self {
-        let mut segments = self.segments.clone();
-        segments.push(child.to_string());
-        Self { segments }
-    }
-
     fn parent(&self) -> Option<Self> {
         if self.segments.len() == 1 {
             None
@@ -120,7 +114,7 @@ impl Path {
 
 struct Shell {
     current_dir: Path,
-    directories: HashMap<String, Directory>,
+    directories: HashMap<String, usize>,
 }
 
 enum Command {
@@ -128,22 +122,10 @@ enum Command {
     Ls(Vec<String>),
 }
 
-struct Directory {
-    name: String,
-    size: usize,
-}
-
-impl Directory {
-    fn new(name: String) -> Self {
-        Directory { name, size: 0 }
-    }
-}
-
 impl Shell {
     fn new() -> Self {
-        let root = Directory::new("/".to_string());
         let mut directories = HashMap::new();
-        directories.insert("".to_string(), root);
+        directories.insert("".to_string(), 0);
         Self {
             current_dir: Path { segments: vec![] },
             directories,
@@ -154,24 +136,23 @@ impl Shell {
         match command {
             Command::Cd(dir) => {
                 self.current_dir = self.current_dir.get_relative(&dir);
+                self.directories
+                    .entry(self.current_dir.string())
+                    .or_insert(0);
             }
             Command::Ls(output) => {
                 let mut total = 0;
                 for line in output {
-                    if line.starts_with("dir") {
-                        let dir = Directory::new(line[4..].to_string());
-                        let path = self.current_dir.child(&dir.name);
-                        self.directories.insert(path.string(), dir);
-                    } else {
-                        let (size, _) = line.split_once(' ').unwrap();
-                        let size: usize = size.parse().unwrap();
+                    let (size, _) = line.split_once(' ').unwrap();
+                    if let Ok(size) = size.parse::<usize>() {
                         total += size;
                     }
                 }
+
                 let mut path = Some(self.current_dir.clone());
                 while let Some(p) = path {
-                    self.directories.entry(p.string()).and_modify(|dir| {
-                        dir.size += total;
+                    self.directories.entry(p.string()).and_modify(|size| {
+                        *size += total;
                     });
                     path = p.parent();
                 }
