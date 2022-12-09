@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use hashbrown::HashSet;
+use fxhash::FxHashSet;
 
 const INPUT: &str = include_str!("../input.txt");
 
@@ -30,7 +30,7 @@ fn main() {
 }
 
 fn part1(inputs: &[(i32, i32)]) -> usize {
-    let mut visited = HashSet::new();
+    let mut visited = FxHashSet::default();
 
     let mut head = Knot(0, 0);
     let mut tail = head;
@@ -49,7 +49,7 @@ fn part1(inputs: &[(i32, i32)]) -> usize {
 fn part2(inputs: &[(i32, i32)]) -> usize {
     const N: usize = 9;
 
-    let mut visited = HashSet::new();
+    let mut visited = FxHashSet::default();
     let mut head = Knot(0, 0);
     let mut rope = [Knot(0, 0); N];
 
