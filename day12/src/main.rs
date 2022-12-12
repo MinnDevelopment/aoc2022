@@ -42,7 +42,7 @@ fn parse_input<const N: usize>(input: &[u8; N]) -> Grid<N> {
                 i += 1;
                 j = 0;
                 continue;
-            },
+            }
             b'S' => {
                 start = (i, j);
             }
@@ -64,7 +64,6 @@ fn parse_input<const N: usize>(input: &[u8; N]) -> Grid<N> {
         rows: i + 1,
         cols: j,
     };
-
 
     Grid {
         heightmap,
