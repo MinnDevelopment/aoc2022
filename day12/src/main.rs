@@ -1,11 +1,11 @@
 use std::{collections::VecDeque, time::Instant};
 
-const INPUT: &str = include_str!("../input.txt");
+const INPUT: [u8; 7461] = *include_bytes!("../input.txt");
 
 fn main() {
     let start_time = Instant::now();
 
-    let inputs = parse_input(INPUT);
+    let inputs = parse_input(&INPUT);
     let input_time = Instant::now();
 
     let a = part1(&inputs);
@@ -27,30 +27,44 @@ fn main() {
     println!("\nTotal Time: {:?}", part2_time - start_time);
 }
 
-fn parse_input(input: &str) -> Grid {
+fn parse_input<const N: usize>(input: &[u8; N]) -> Grid<N> {
     let mut start = (0, 0);
     let mut end = (0, 0);
 
-    let mut heightmap: Box<[Box<[i8]>]> = input
-        .lines()
-        .map(|line| line.bytes().map(|b| b as i8).collect())
-        .collect();
+    let mut i = 0;
+    let mut j = 0;
+    let mut data = [0; N];
+    let mut k = 0;
 
-    for i in 0..heightmap.len() {
-        for j in 0..heightmap[i].len() {
-            heightmap[i][j] = match heightmap[i][j] as u8 {
-                b'S' => {
-                    start = (i, j);
-                    0
-                }
-                b'E' => {
-                    end = (i, j);
-                    25
-                }
-                b => (b - b'a') as i8,
-            };
+    for b in input {
+        match b {
+            b'\n' => {
+                i += 1;
+                j = 0;
+                continue;
+            },
+            b'S' => {
+                start = (i, j);
+            }
+            b'E' => {
+                end = (i, j);
+                data[k] = 25;
+            }
+            b => {
+                data[k] = (b - b'a') as i8;
+            }
         }
+
+        j += 1;
+        k += 1;
     }
+
+    let heightmap = Array2d {
+        data,
+        rows: i + 1,
+        cols: j,
+    };
+
 
     Grid {
         heightmap,
@@ -59,26 +73,31 @@ fn parse_input(input: &str) -> Grid {
     }
 }
 
-fn part1(grid: &Grid) -> usize {
-    let (n, m) = (grid.heightmap.len(), grid.heightmap[0].len());
+fn part1<const N: usize>(grid: &Grid<N>) -> usize {
+    let (n, m) = (grid.heightmap.rows, grid.heightmap.cols);
 
-    let mut queue = VecDeque::new();
-    let mut visited = vec![vec![false; m]; n];
+    let mut queue = VecDeque::from([(0, grid.start.0, grid.start.1)]);
+    let mut visited = Array2d {
+        data: [false; N],
+        rows: n,
+        cols: m,
+    };
 
-    visited[grid.start.0][grid.start.1] = true;
-    queue.push_back((0, grid.start.0, grid.start.1));
+    let end = grid.end;
+    visited.set(grid.start.0, grid.start.1, true);
+    let grid = &grid.heightmap;
 
     const NEIGHBORS: [(isize, isize); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
     while let Some((d, i, j)) = queue.pop_front() {
-        let h = grid.heightmap[i][j];
+        let h = grid.get(i, j);
         for (oi, oj) in NEIGHBORS {
             let di = (i as isize + oi) as usize;
             let dj = (j as isize + oj) as usize;
 
-            if di < n && dj < m && !visited[di][dj] && grid.heightmap[di][dj] - h <= 1 {
-                visited[di][dj] = true;
-                if (di, dj) == grid.end {
+            if di < n && dj < m && !visited.get(di, dj) && grid.get(di, dj) - h <= 1 {
+                visited.set(di, dj, true);
+                if (di, dj) == end {
                     return d + 1;
                 }
 
@@ -87,29 +106,33 @@ fn part1(grid: &Grid) -> usize {
         }
     }
 
-    panic!("No path found")
+    unreachable!("No path found")
 }
 
-fn part2(grid: &Grid) -> usize {
-    let (n, m) = (grid.heightmap.len(), grid.heightmap[0].len());
+fn part2<const N: usize>(grid: &Grid<N>) -> usize {
+    let (n, m) = (grid.heightmap.rows, grid.heightmap.cols);
 
-    let mut queue = VecDeque::new();
-    let mut visited = vec![vec![false; m]; n];
+    let mut queue = VecDeque::from([(0, grid.end.0, grid.end.1)]);
+    let mut visited = Array2d {
+        data: [false; N],
+        rows: n,
+        cols: m,
+    };
 
-    visited[grid.end.0][grid.end.1] = true;
-    queue.push_back((0, grid.end.0, grid.end.1));
+    visited.set(grid.end.0, grid.end.1, true);
+    let grid = &grid.heightmap;
 
     const NEIGHBORS: [(isize, isize); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
     while let Some((d, i, j)) = queue.pop_front() {
-        let h = grid.heightmap[i][j];
+        let h = grid.get(i, j);
         for (oi, oj) in NEIGHBORS {
             let di = (i as isize + oi) as usize;
             let dj = (j as isize + oj) as usize;
 
-            if di < n && dj < m && !visited[di][dj] && h - grid.heightmap[di][dj] <= 1 {
-                visited[di][dj] = true;
-                if grid.heightmap[di][dj] == 0 {
+            if di < n && dj < m && !visited.get(di, dj) && h - grid.get(di, dj) <= 1 {
+                visited.set(di, dj, true);
+                if grid.get(di, dj) == 0 {
                     return d + 1;
                 }
 
@@ -118,20 +141,38 @@ fn part2(grid: &Grid) -> usize {
         }
     }
 
-    panic!("No path found")
+    unreachable!("No path found")
 }
 
-struct Grid {
-    heightmap: Box<[Box<[i8]>]>,
+struct Array2d<T, const N: usize> {
+    data: [T; N],
+    rows: usize,
+    cols: usize,
+}
+
+struct Grid<const N: usize> {
+    heightmap: Array2d<i8, N>,
     start: (usize, usize),
     end: (usize, usize),
+}
+
+impl<T: Copy, const N: usize> Array2d<T, N> {
+    #[inline(always)]
+    const fn get(&self, i: usize, j: usize) -> T {
+        self.data[i * self.cols + j]
+    }
+
+    #[inline(always)]
+    fn set(&mut self, i: usize, j: usize, val: T) {
+        self.data[i * self.cols + j] = val;
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const TEST_INPUT: &str = "Sabqponm
+    const TEST_INPUT: [u8; 44] = *b"Sabqponm
 abcryxxl
 accszExk
 acctuvwj
@@ -139,11 +180,11 @@ abdefghi";
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(&parse_input(TEST_INPUT)), 31);
+        assert_eq!(part1(&parse_input(&TEST_INPUT)), 31);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(&parse_input(TEST_INPUT)), 29);
+        assert_eq!(part2(&parse_input(&TEST_INPUT)), 29);
     }
 }
