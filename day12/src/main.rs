@@ -1,4 +1,8 @@
-use std::{collections::VecDeque, time::Instant};
+use std::{
+    collections::VecDeque,
+    ops::{Index, IndexMut},
+    time::Instant,
+};
 
 const INPUT: [u8; 7461] = *include_bytes!("../input.txt");
 
@@ -83,23 +87,24 @@ fn part1<const N: usize>(grid: &Grid<N>) -> usize {
     };
 
     let end = grid.end;
-    visited.set(grid.start.0, grid.start.1, true);
+    visited[grid.start] = true;
     let grid = &grid.heightmap;
 
     const NEIGHBORS: [(isize, isize); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
     while let Some((d, i, j)) = queue.pop_front() {
-        let h = grid.get(i, j);
+        let h = grid[(i, j)];
         for (oi, oj) in NEIGHBORS {
             let di = (i as isize + oi) as usize;
             let dj = (j as isize + oj) as usize;
+            let p = (di, dj);
 
-            if di < n && dj < m && !visited.get(di, dj) && grid.get(di, dj) - h <= 1 {
-                visited.set(di, dj, true);
-                if (di, dj) == end {
+            if di < n && dj < m && !visited[p] && grid[p] - h <= 1 {
+                if p == end {
                     return d + 1;
                 }
 
+                visited[p] = true;
                 queue.push_back((d + 1, di, dj));
             }
         }
@@ -118,23 +123,24 @@ fn part2<const N: usize>(grid: &Grid<N>) -> usize {
         cols: m,
     };
 
-    visited.set(grid.end.0, grid.end.1, true);
+    visited[grid.end] = true;
     let grid = &grid.heightmap;
 
     const NEIGHBORS: [(isize, isize); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
     while let Some((d, i, j)) = queue.pop_front() {
-        let h = grid.get(i, j);
+        let h = grid[(i, j)];
         for (oi, oj) in NEIGHBORS {
             let di = (i as isize + oi) as usize;
             let dj = (j as isize + oj) as usize;
+            let p = (di, dj);
 
-            if di < n && dj < m && !visited.get(di, dj) && h - grid.get(di, dj) <= 1 {
-                visited.set(di, dj, true);
-                if grid.get(di, dj) == 0 {
+            if di < n && dj < m && !visited[p] && h - grid[p] <= 1 {
+                if grid[p] == 0 {
                     return d + 1;
                 }
 
+                visited[p] = true;
                 queue.push_back((d + 1, di, dj));
             }
         }
@@ -155,15 +161,19 @@ struct Grid<const N: usize> {
     end: (usize, usize),
 }
 
-impl<T: Copy, const N: usize> Array2d<T, N> {
-    #[inline(always)]
-    const fn get(&self, i: usize, j: usize) -> T {
-        self.data[i * self.cols + j]
-    }
+impl<T: Copy, const N: usize> Index<(usize, usize)> for Array2d<T, N> {
+    type Output = T;
 
     #[inline(always)]
-    fn set(&mut self, i: usize, j: usize, val: T) {
-        self.data[i * self.cols + j] = val;
+    fn index(&self, (i, j): (usize, usize)) -> &Self::Output {
+        &self.data[i * self.cols + j]
+    }
+}
+
+impl<T: Copy, const N: usize> IndexMut<(usize, usize)> for Array2d<T, N> {
+    #[inline(always)]
+    fn index_mut(&mut self, (i, j): (usize, usize)) -> &mut Self::Output {
+        &mut self.data[i * self.cols + j]
     }
 }
 
